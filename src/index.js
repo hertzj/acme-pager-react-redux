@@ -21,18 +21,9 @@ const reducer = (state = initialState, action) => {
             }
             return newPage;
         case 'newEmployees':
-            let newEmployees;
-            if (state.employees.length < 50) {
-                newEmployees = {
-                    ...state,
-                    employees: [...state.employees, action.data],
-                }
-            }
-            else {
-                newEmployees = {
-                    ...state,
-                    employees: [action.data],
-                }
+            let newEmployees = {
+                ...state,
+                employees: action.data
             }
 
         return newEmployees;
@@ -42,28 +33,77 @@ const reducer = (state = initialState, action) => {
 }
 
 
+
+// reducer for fetchEmployees where each employee is added to store individually
+// const reducer = (state = initialState, action) => {
+//     switch(action.type) {
+//         case 'pageChange': 
+//             let newPage = {
+//                 ...state,
+//                 selected: action.data
+//             }
+//             return newPage;
+//         case 'newEmployees':
+//             let newEmployees;
+//             if (state.employees.length < 50) {
+//                 newEmployees = {
+//                     ...state,
+//                     employees: [...state.employees, action.data],
+//                 }
+//             }
+//             else {
+//                 newEmployees = {
+//                     ...state,
+//                     employees: [action.data],
+//                 }
+//             }
+
+//         return newEmployees;
+//     default:
+//             return state
+//     }
+// }
+
+
 const store = createStore(reducer);
 
 const fetchEmployees = async () => {
     const page = store.getState().selected;
-    console.log(page);
+    // console.log(page);
     await axios.get(`/api/employees/${page}`)
         .then(response => {
             const employees = response.data.rows;
-            employees.forEach(employee => {
-                store.dispatch( {
-                    type: 'newEmployees',
-                    data: {
-                        firstName: employee.firstName,
-                        lastName: employee.lastName,
-                        email: employee.email,
-                        title: employee.title,
-                    }
-                })
+            // console.log('axios employees: ', employees)
+            store.dispatch( {
+                type: 'newEmployees',
+                data: employees,
             })
-
+            console.log('in the store: ', store.getState().employees)
         })
 }
+
+// with adding each employee to the store individually (requires if/else in switch above)
+// const fetchEmployees = async () => {
+//     const page = store.getState().selected;
+//     console.log(page);
+//     await axios.get(`/api/employees/${page}`)
+//         .then(response => {
+//             const employees = response.data.rows;
+//             employees.forEach(employee => {
+//                 store.dispatch( {
+//                     type: 'newEmployees',
+//                     data: {
+//                         firstName: employee.firstName,
+//                         lastName: employee.lastName,
+//                         email: employee.email,
+//                         title: employee.title,
+//                     }
+//                 })
+//             })
+
+//         })
+// }
+
 
 const rootEl = document.querySelector('#root');
 
@@ -75,7 +115,7 @@ class Nav extends Component {
     }
     componentWillUnmount() {
         this.unsubscribe();
-        console.log('nav unmounted and unsubscribed!!!')
+
     }
     componentDidMount() {
         this.unsubscribe = store.subscribe(() => this.setState(store.getState()));
@@ -149,7 +189,7 @@ class List extends Component {
     }
     componentWillUnmount() {
         this.unsubscribe();
-        console.log('list unmounted and unsubscribed!!!')
+
     }
     componentDidMount() {
         this.unsubscribe = store.subscribe(() => this.setState(store.getState()))
@@ -159,7 +199,7 @@ class List extends Component {
         const priorSpot = prevProps.location.pathname;
         if (currentSpot !== priorSpot) {
             fetchEmployees()
-            console.log('employees in the store: ', store.getState().employees)
+            // console.log('employees in the store: ', store.getState().employees)
         }
     }
     // componentDidUpdate(prevProps) {

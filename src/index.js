@@ -1,36 +1,118 @@
+// const { createStore } = Redux;
+import { createStore } from 'redux';
 import React, { Component }  from 'react';
 import ReactDOM from 'react-dom';
 import ReactRouterDOM, { HashRouter, Link, Route } from 'react-router-dom'
 import axios from 'axios';
 
+// put the below at the top
 
+const initialState = { // could just have it be an array
+    employees: [],
+    selected: 0,
+}
+
+const reducer = (state = initialState, action) => {
+    switch(action.type) {
+        case 'pageChange': 
+            let newPage = {
+                ...state,
+                selected: action.data
+            }
+            return newPage;
+        case 'newEmployees':
+            let newEmployees;
+            if (state.employees.length < 50) {
+                newEmployees = {
+                    ...state,
+                    employees: [...state.employees, action.data],
+                }
+            }
+            else {
+                newEmployees = {
+                    ...state,
+                    employees: [action.data],
+                }
+            }
+
+        return newEmployees;
+    default:
+            return state
+    }
+}
+
+
+const store = createStore(reducer);
+
+const fetchEmployees = async () => {
+    const page = store.getState().selected;
+    console.log(page);
+    await axios.get(`/api/employees/${page}`)
+        .then(response => {
+            const employees = response.data.rows;
+            employees.forEach(employee => {
+                store.dispatch( {
+                    type: 'newEmployees',
+                    data: {
+                        firstName: employee.firstName,
+                        lastName: employee.lastName,
+                        email: employee.email,
+                        title: employee.title,
+                    }
+                })
+            })
+
+        })
+}
 
 const rootEl = document.querySelector('#root');
 
 
 class Nav extends Component {
-    constructor( { props } ) {
+    constructor(props) {
         super();
-        this.state = {
-            selected: 0
-        }
+        this.state = store.getState()
+    }
+    componentWillUnmount() {
+        this.unsubscribe();
+        console.log('nav unmounted and unsubscribed!!!')
     }
     componentDidMount() {
-        const selected = Number(this.props.location.pathname.slice(1));
-        this.setState({selected})
+        this.unsubscribe = store.subscribe(() => this.setState(store.getState()));
     }
+    // componentDidMount() {
+    //     const selected = Number(this.props.location.pathname.slice(1));
+    //     this.setState({selected})
+    // }
+    // componentDidUpdate(prevProps) {
+    //     const currentSpot = this.props.location.pathname;
+    //     const priorSpot = prevProps.location.pathname;
+    //     if (currentSpot !== priorSpot) {
+    //         const selected = Number(currentSpot.slice(1));
+    //         this.setState({selected})
+    //     }
+
+    // }
     componentDidUpdate(prevProps) {
         const currentSpot = this.props.location.pathname;
         const priorSpot = prevProps.location.pathname;
+        // console.log('currentspot: ', currentSpot)
+        // console.log('priorspot: ', priorSpot)
         if (currentSpot !== priorSpot) {
             const selected = Number(currentSpot.slice(1));
-            this.setState({selected})
+            // console.log('selected is:', selected);
+            store.dispatch( {
+                data: selected,
+                type: 'pageChange'
+            })
+            // console.log('store selected is: ', store.getState().selected)
+            // console.log('store employees are: ', store.getState().employees)
         }
 
     }
     // eslint-disable-next-line complexity
     render() {
-        const { selected } = this.state;
+        const selected = store.getState().selected;
         const linkMaker = Array(7).fill('');
         return (
             <div className='nav'>
@@ -61,37 +143,40 @@ class Nav extends Component {
 
 // eslint-disable-next-line react/no-multi-comp
 class List extends Component {
-    constructor( { employees, props, updateEmployees } ) {
+    constructor(props) { // might need props
         super();
-        this.state = {
-            employees,
-            updateEmployees
-        }
+        this.state = store.getState();
+    }
+    componentWillUnmount() {
+        this.unsubscribe();
+        console.log('list unmounted and unsubscribed!!!')
     }
     componentDidMount() {
-        const selected = Number(location.hash.slice(2));
-        axios.get(`/api/employees/${Number(selected)}`) 
-            .then(response => {
-                const employees = response.data.rows;
-                this.state.updateEmployees(employees);
-                this.setState({employees})
-            })
+        this.unsubscribe = store.subscribe(() => this.setState(store.getState()))
     }
     componentDidUpdate(prevProps) {
         const currentSpot = this.props.location.pathname;
         const priorSpot = prevProps.location.pathname;
-
         if (currentSpot !== priorSpot) {
-            const selected = currentSpot.slice(1)
-            axios.get(`/api/employees/${Number(selected)}`) 
-                .then(response => {
-                    const employees = response.data.rows;
-                    this.state.updateEmployees(employees);
-                    this.setState({employees})
-                })
+            fetchEmployees()
+            console.log('employees in the store: ', store.getState().employees)
         }
-
     }
+    // componentDidUpdate(prevProps) {
+    //     const currentSpot = this.props.location.pathname;
+    //     const priorSpot = prevProps.location.pathname;
+
+    //     if (currentSpot !== priorSpot) {
+    //         const selected = currentSpot.slice(1)
+    //         axios.get(`/api/employees/${Number(selected)}`) 
+    //             .then(response => {
+    //                 const employees = response.data.rows;
+    //                 this.state.updateEmployees(employees);
+    //                 this.setState({employees})
+    //             })
+    //     }
+
+    // }
     render() {
         const { employees } = this.state;
         return (
@@ -125,40 +210,60 @@ class List extends Component {
 
 // eslint-disable-next-line react/no-multi-comp
 class App extends Component {
-    constructor() {
-        super()
-        this.state = {
-            employees: [],
-            selected: 0,
-        }
-        this.updateEmployees = this.updateEmployees.bind(this);
-    }
-    // async componentDidMount() { // need something for the correct page, // might be response.data.rows
-    //     const { selected } = this.state // could also do this with location.hash or params?
-    //     await axios.get(`/api/employees/${Number(selected)}`) 
-    //         .then(response => {
-    //             const employees = response.data.rows;
-    //             // console.log('employees are: ', employees)
-    //             this.setState({employees})
-    //             // console.log(this.state.employees)
-    //         })
-    // }
-
-    updateEmployees(newEmployees) {
-        this.setState({employees: newEmployees})
-        console.log('app employees: ', this.state.employees)
+    componentDidMount() {
+        fetchEmployees();
     }
     render() {
-        const { employees, selected } = this.state;
-        const { updateEmployees } = this;
         return (
             <HashRouter>
-                <Route render={(props) => <Nav employees={ employees } selected = { selected } {...props} />} />
-                <Route path ='/:page?' render={(props) => <List employees={ employees } selected = { selected } updateEmployees = { updateEmployees } {...props} />} />
+                <Route component = { Nav } />
+                <Route path ='/:page?' component = { List } />
             </HashRouter>
         )
     }
 }
+
+
+
+
+
+
+// eslint-disable-next-line react/no-multi-comp
+// class App extends Component {
+//     constructor() {
+//         super()
+//         this.state = {
+//             employees: [],
+//             selected: 0,
+//         }
+//         this.updateEmployees = this.updateEmployees.bind(this);
+//     }
+//     // async componentDidMount() { // need something for the correct page, // might be response.data.rows
+//     //     const { selected } = this.state // could also do this with location.hash or params?
+//     //     await axios.get(`/api/employees/${Number(selected)}`) 
+//     //         .then(response => {
+//     //             const employees = response.data.rows;
+//     //             // console.log('employees are: ', employees)
+//     //             this.setState({employees})
+//     //             // console.log(this.state.employees)
+//     //         })
+//     // }
+
+//     updateEmployees(newEmployees) {
+//         this.setState({employees: newEmployees})
+//         console.log('app employees: ', this.state.employees)
+//     }
+//     render() {
+//         const { employees, selected } = this.state;
+//         const { updateEmployees } = this;
+//         return (
+//             <HashRouter>
+//                 <Route render={(props) => <Nav employees={ employees } selected = { selected } {...props} />} />
+//                 <Route path ='/:page?' render={(props) => <List employees={ employees } selected = { selected } updateEmployees = { updateEmployees } {...props} />} />
+//             </HashRouter>
+//         )
+//     }
+// }
 
 
 ReactDOM.render(<App />, rootEl);

@@ -74,7 +74,7 @@ class Nav extends Component {
 
 // eslint-disable-next-line react/no-multi-comp
 class List extends Component {
-    constructor( { employees, selected } ) {
+    constructor( { employees, selected, props } ) {
         super();
         this.state = {
             employees,
@@ -88,28 +88,29 @@ class List extends Component {
         axios.get(`/api/employees/${Number(selected)}`) 
             .then(response => {
                 const employees = response.data.rows;
-                // console.log('employees are: ', employees)
                 this.setState({employees})
-                // console.log(this.state.employees)
             })
     }
-    // componentDidUpdate(prevState) { // need something for the correct page
-        // console.log('previous list selected', prevState.selected)
-        // if (this.state.selected !== prevState.selected) {
-        //     const { selected } = this.state // could also do this with location.hash or params?
-        //     axios.get(`/api/employees/${Number(selected)}`) 
-        //         .then(response => {
-        //             const employees = response.data.rows;
-        //             // console.log('employees are: ', employees)
-        //             this.setState({employees})
-        //             console.log(this.state.employees)
-        //         })
-        // }
+    componentDidUpdate(prevProps) { // need something for the correct page
+        const currentSpot = this.props.location.pathname;
+        const priorSpot = prevProps.location.pathname
 
-    // }
+        if (currentSpot !== priorSpot) {
+            // console.log('in cdu if')
+            // const { selected } = this.state // could also do this with location.hash or params?
+            const selected = currentSpot.slice(1)
+            axios.get(`/api/employees/${Number(selected)}`) 
+                .then(response => {
+                    const employees = response.data.rows;
+                    // console.log('employees are: ', employees)
+                    this.setState({employees})
+                    console.log(this.state.employees)
+                })
+        }
+
+    }
     render() {
         const { employees, selected } = this.state;
-        console.log(history)
         // console.log('list location', location);
         // console.log('list selected:', selected)
         // console.log('list employees: ', employees)
@@ -176,8 +177,8 @@ class App extends Component {
         const { updateSelected, updateEmployees } = this;
         return (
             <HashRouter>
-                <Route render={() => <Nav employees={ employees } selected = { selected } updateSelected = { updateSelected } {...this.props} />} />
-                <Route path ='/:page?' render={() => <List employees={ employees } selected = { selected } updateEmployees = { updateEmployees } {...this.props} />} />
+                <Route render={(props) => <Nav employees={ employees } selected = { selected } updateSelected = { updateSelected } {...props} />} />
+                <Route path ='/:page?' render={(props) => <List employees={ employees } selected = { selected } updateEmployees = { updateEmployees } {...props} />} />
             </HashRouter>
         )
     }

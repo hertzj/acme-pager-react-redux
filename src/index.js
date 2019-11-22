@@ -11,16 +11,25 @@ const rootEl = document.querySelector('#root');
 // ReactDOM.render(<div>Hello</div>, rootEl);
 
 class Nav extends Component {
-    constructor( { employees, selected } ) {
+    constructor( { props } ) {
         super();
         this.state = {
-            employees,
-            selected,
+            selected: 0
         }
     }
     componentDidMount() {
-        const selected = Number(location.hash.slice(2));
+        // const selected = Number(location.hash.slice(2));
+        const selected = Number(this.props.location.pathname.slice(1));
         this.setState({selected})
+    }
+    componentDidUpdate(prevProps) {
+        const currentSpot = this.props.location.pathname;
+        const priorSpot = prevProps.location.pathname;
+        if (currentSpot !== priorSpot) {
+            const selected = Number(currentSpot.slice(1));
+            this.setState({selected})
+        }
+
     }
     // eslint-disable-next-line complexity
     render() {
@@ -28,8 +37,8 @@ class Nav extends Component {
         // console.log('nav hash: ', location.hash.slice(2))
         // const selected = Number(location.hash.slice(2)); // switch this to a stateful selected
         // console.log('and selected is: ', selected)
-        const { employees, selected } = this.state;
-        const { updateSelected } = this.props
+        const { selected } = this.state;
+        // const { updateSelected } = this.props
         const linkMaker = Array(7).fill('');
         return (
             <div className='nav'>
@@ -46,13 +55,13 @@ class Nav extends Component {
                         return <a
                             href={`#${idx}`}
                             className={selected === idx ? 'current' : ''}
-                            onClick={() => updateSelected(idx)}
+                            // onClick={() => updateSelected(idx)}
                             >{idx + 1}</a>
                     })
                 }
                 <a
                     href={selected < 6 ? `#${selected + 1}` : '#6'}
-                    onClick={() => selected < 6 ? updateSelected(selected + 1) : null}
+                    // onClick={() => selected < 6 ? updateSelected(selected + 1) : null}
                     >Next</a>
             </div>
         )
@@ -74,11 +83,10 @@ class Nav extends Component {
 
 // eslint-disable-next-line react/no-multi-comp
 class List extends Component {
-    constructor( { employees, selected, props } ) {
+    constructor( { employees, props } ) {
         super();
         this.state = {
             employees,
-            selected,
         }
     }
     componentDidMount() { // need something for the correct page, // might be response.data.rows
@@ -93,7 +101,7 @@ class List extends Component {
     }
     componentDidUpdate(prevProps) { // need something for the correct page
         const currentSpot = this.props.location.pathname;
-        const priorSpot = prevProps.location.pathname
+        const priorSpot = prevProps.location.pathname;
 
         if (currentSpot !== priorSpot) {
             // console.log('in cdu if')
@@ -104,13 +112,13 @@ class List extends Component {
                     const employees = response.data.rows;
                     // console.log('employees are: ', employees)
                     this.setState({employees})
-                    console.log(this.state.employees)
+                    // console.log(this.state.employees)
                 })
         }
 
     }
     render() {
-        const { employees, selected } = this.state;
+        const { employees } = this.state;
         // console.log('list location', location);
         // console.log('list selected:', selected)
         // console.log('list employees: ', employees)
@@ -151,7 +159,7 @@ class App extends Component {
             employees: [],
             selected: 0,
         }
-        this.updateSelected = this.updateSelected.bind(this);
+        // this.updateSelected = this.updateSelected.bind(this);
         this.updateEmployees = this.updateEmployees.bind(this);
     }
     // async componentDidMount() { // need something for the correct page, // might be response.data.rows
@@ -165,10 +173,10 @@ class App extends Component {
     //         })
     // }
 
-    updateSelected(newSelected) {
-        this.setState({selected: newSelected})
-        console.log('app selected: ', this.state.selected);
-    }
+    // updateSelected(newSelected) {
+    //     this.setState({selected: newSelected})
+    //     console.log('app selected: ', this.state.selected);
+    // }
     updateEmployees(newEmployees) {
         this.setState({employees: newEmployees})
     }
@@ -177,7 +185,7 @@ class App extends Component {
         const { updateSelected, updateEmployees } = this;
         return (
             <HashRouter>
-                <Route render={(props) => <Nav employees={ employees } selected = { selected } updateSelected = { updateSelected } {...props} />} />
+                <Route render={(props) => <Nav employees={ employees } selected = { selected } {...props} />} />
                 <Route path ='/:page?' render={(props) => <List employees={ employees } selected = { selected } updateEmployees = { updateEmployees } {...props} />} />
             </HashRouter>
         )

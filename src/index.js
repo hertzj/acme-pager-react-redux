@@ -11,6 +11,7 @@ const initialState = { // could just have it be an array
     employees: [],
     selected: 0,
     count: 0,
+    submittedEmployee: {},
 }
 
 const reducer = (state = initialState, action) => {
@@ -32,8 +33,14 @@ const reducer = (state = initialState, action) => {
                 ...state,
                 count: action.data,
             }
-            return newState
+            return newState;
         }
+        case 'employeeSubmit':
+            let submittedEmployee = {
+                ...state,
+                submittedEmployee: action.data,
+            }
+            return submittedEmployee;
     default:
             return state
     }
@@ -294,7 +301,12 @@ class Create extends Component {
             email: email,
             title: title,
         }
-        axios.post('/api/employees/', newEmployee);
+        store.dispatch({
+            data: newEmployee,
+            type: 'employeeSubmit'
+        })
+        const submitted = store.getState().submittedEmployee
+        axios.post('/api/employees/', submitted);
         this.setState({
             firstName: '',
             lastName: '',

@@ -78,7 +78,7 @@ const fetchEmployees = async () => {
                 type: 'newEmployees',
                 data: employees,
             })
-            console.log('in the store: ', store.getState().employees)
+            // console.log('in the store: ', store.getState().employees)
         })
 }
 
@@ -217,6 +217,11 @@ class List extends Component {
     //     }
 
     // }
+    deleteEmployee(e) {
+        const id = e.target.parentNode.parentNode.dataset.id;
+        axios.delete(`/api/employees/rows/${id}`)
+        fetchEmployees();
+    }
     render() {
         const { employees } = this.state;
         return (
@@ -233,11 +238,12 @@ class List extends Component {
                     {
                         employees.map(employee => {
                             return (
-                                <tr key={employee.id}>
+                                <tr key={employee.id} data-id={employee.id}>
                                     <td>{employee.firstName}</td>
                                     <td>{employee.lastName}</td>
                                     <td>{employee.email}</td>
                                     <td>{employee.title}</td>
+                                    <td><button onClick={(e) => this.deleteEmployee(e)}>Delete!</button></td>                                    
                                 </tr>
                             )
                         })
@@ -255,10 +261,13 @@ class App extends Component {
     }
     render() {
         return (
+            <div className='header'>
+            <h1>ACME Pager</h1>
             <HashRouter>
                 <Route component = { Nav } />
                 <Route path ='/:page?' component = { List } />
             </HashRouter>
+            </div>
         )
     }
 }

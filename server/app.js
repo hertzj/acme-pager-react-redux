@@ -7,6 +7,8 @@ const { Employee } = require('./db/index.js');
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
+app.use(express.json()) // added
+
 app.get('/', (req, res, next) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
@@ -37,5 +39,22 @@ app.get('/api/employees/:page?', (req, res, next) => {
     res.status(200).send(results);
   });
 });
+
+// added the below
+
+app.delete('/api/employees/rows/:id', (req, res, next) => {
+  const { id } = req.params;
+  console.log(id);
+  Employee.destroy({
+    where: {
+      id,
+    }
+  })
+    .then(employees => {
+      res.sendStatus = 200;
+      res.sendStatus = employees;
+    })
+    .catch(next)
+})
 
 module.exports = { app };

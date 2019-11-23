@@ -10,6 +10,7 @@ import axios from 'axios';
 const initialState = { // could just have it be an array
     employees: [],
     selected: 0,
+    count: 0,
 }
 
 const reducer = (state = initialState, action) => {
@@ -25,8 +26,14 @@ const reducer = (state = initialState, action) => {
                 ...state,
                 employees: action.data
             }
-
         return newEmployees;
+        case 'setCount': {
+            let newState = {
+                ...state,
+                count: action.data,
+            }
+            return newState
+        }
     default:
             return state
     }
@@ -73,10 +80,15 @@ const fetchEmployees = async () => {
     await axios.get(`/api/employees/${page}`)
         .then(response => {
             const employees = response.data.rows;
+            const count = response.data.count
             // console.log('axios employees: ', employees)
             store.dispatch( {
                 type: 'newEmployees',
                 data: employees,
+            })
+            store.dispatch({
+                type: 'setCount',
+                data: count,
             })
             // console.log('in the store: ', store.getState().employees)
         })
@@ -153,7 +165,8 @@ class Nav extends Component {
     // eslint-disable-next-line complexity
     render() {
         const selected = store.getState().selected;
-        const linkMaker = Array(7).fill('');
+        let numPages = Math.ceil(store.getState().count / 50)
+        const linkMaker = Array(numPages).fill('');
         return (
             <div className='nav'>
                 <a href={selected > 0 ? `#${selected - 1}` : '#'} >Previous</a>

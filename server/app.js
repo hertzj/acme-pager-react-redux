@@ -42,6 +42,18 @@ app.get('/api/employees/:page?', (req, res, next) => {
 
 // added the below
 
+app.post('/api/employees', (req, res, next) => {
+  Employee.create(req.body)
+    .then(employee => {
+      res.statusCode = 200;
+      res.sendStatus = employee
+    })
+    .catch(e => {
+      res.statusCode = 400;
+      next(e)
+    })
+})
+
 app.delete('/api/employees/rows/:id', (req, res, next) => {
   const { id } = req.params;
   console.log(id);
@@ -51,10 +63,13 @@ app.delete('/api/employees/rows/:id', (req, res, next) => {
     }
   })
     .then(employees => {
-      res.sendStatus = 200;
+      res.statusCode = 200;
       res.sendStatus = employees;
     })
-    .catch(next)
+    .catch(e => {
+      res.statusCode = 400;
+      next(e);
+    })
 })
 
 module.exports = { app };

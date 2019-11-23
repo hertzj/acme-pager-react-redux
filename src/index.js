@@ -2,7 +2,7 @@
 import { createStore } from 'redux';
 import React, { Component }  from 'react';
 import ReactDOM from 'react-dom';
-import ReactRouterDOM, { HashRouter, Link, Route } from 'react-router-dom'
+import ReactRouterDOM, { HashRouter, Link, Route, Switch } from 'react-router-dom'
 import axios from 'axios';
 
 // put the below at the top
@@ -167,6 +167,7 @@ class Nav extends Component {
         const selected = store.getState().selected;
         let numPages = Math.ceil(store.getState().count / 50)
         const linkMaker = Array(numPages).fill('');
+        const path = this.props.location.pathname.slice(1)
         return (
             <div className='nav'>
                 <a href={selected > 0 ? `#${selected - 1}` : '#'} >Previous</a>
@@ -188,6 +189,7 @@ class Nav extends Component {
                 <a
                     href={selected < 6 ? `#${selected + 1}` : '#6'}
                     >Next</a>
+                <a href="#create" className={path === 'create' ? 'current' : ''}>Create Employee</a>
             </div>
         )
     }
@@ -268,6 +270,58 @@ class List extends Component {
 }
 
 // eslint-disable-next-line react/no-multi-comp
+class Create extends Component {
+    constructor() {
+        super();
+        this.state = {
+            firstName: '',
+            lastName: '',
+            email: '',
+            title: '',
+        }
+    }
+    handleChange(ev) {
+        const field = ev.target.name;
+        this.setState({[field]: ev.target.value})
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const { firstName, lastName, email, title } = this.state
+        const newEmployee = {
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            title: title,
+        }
+        axios.post('/api/employees/', newEmployee);
+        this.setState({
+            firstName: '',
+            lastName: '',
+            email: '',
+            title: '',
+        })
+        const inputs = [...document.querySelectorAll('input')]
+        inputs.forEach(input => {
+            input.value = ''
+        });
+    }
+
+    render() {
+        return (
+            <form onSubmit={(e) => this.handleSubmit(e)}>
+                <h3>Create New Employee</h3>
+                <input type="text" name="firstName" onChange={(e) => this.handleChange(e)}/>
+                <input type="text" name="lastName" onChange={(e) => this.handleChange(e)}/>
+                <input type="text" name="email" onChange={(e) => this.handleChange(e)}/>
+                <input type="text" name="title" onChange={(e) => this.handleChange(e)}/>
+                <button>Create</button>
+            </form>
+        )
+    }
+}
+
+// eslint-disable-next-line react/no-multi-comp
 class App extends Component {
     componentDidMount() {
         fetchEmployees();
@@ -278,7 +332,11 @@ class App extends Component {
             <h1>ACME Pager</h1>
             <HashRouter>
                 <Route component = { Nav } />
-                <Route path ='/:page?' component = { List } />
+                <Switch>
+                    <Route path='/create' component = { Create } />
+                    <Route path ='/:page?' component = { List } />
+                </Switch>
+
             </HashRouter>
             </div>
         )

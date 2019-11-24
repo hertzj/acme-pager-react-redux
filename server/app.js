@@ -56,7 +56,6 @@ app.post('/api/employees', (req, res, next) => {
 
 app.delete('/api/employees/rows/:id', (req, res, next) => {
   const { id } = req.params;
-  console.log(id);
   Employee.destroy({
     where: {
       id,
